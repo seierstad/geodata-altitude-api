@@ -2,7 +2,9 @@
   "name": "geodata-altitude-api",
   "version": "0.0.1",
   "description": "convenience methods for Geodata's altitude API",
+  "type": "module",
   "main": "index.js",
+  "module": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
