@@ -1,0 +1,25 @@
+{
+  "name": "geodata-altitude-api",
+  "version": "0.0.1",
+  "description": "convenience methods for Geodata's altitude API",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seierstad/geodata-altitude-api.git"
+  },
+  "keywords": [
+    "gis"
+  ],
+  "author": "Erik E. Seierstad",
+  "license": "AGPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/seierstad/geodata-altitude-api/issues"
+  },
+  "homepage": "https://github.com/seierstad/geodata-altitude-api#readme",
+  "devDependencies": {
+    "eslint": "^8.42.0"
+  }
+}
