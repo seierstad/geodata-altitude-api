@@ -33,21 +33,21 @@ const responseToJSON = response => {
     return response.json();
 };
 
-const addZCoordinate = ([x, y]) => ({punkter: [{z = ""}] = []}) => ([x, y, parseFloat(z)]);
-const addZCoordinates = (pointArray) => ({punkter: newData = []}) => pointArray.map(([x, y], index) => [x, y, parseFloat(newData[index]["z"])]);
+const addZToPoints = (pointArray) => (zArray) => pointArray.map(([x, y], index) => [x, y, zArray[index]]);
+const pickZ = ({punkter: newData = []}) => newData.map(({z = ""}) => parseFloat(z));
 
 const mergeArrays = a => a.flat();
 
-const getZCoordinate = (point, epsgNumber = DEFAULT_PROJECTION) => {
+const zCoordinate = (add = false) => (point, epsgNumber = DEFAULT_PROJECTION) => {
     const [x, y] = point;
 
     return new Promise((resolve, reject) => {
         const url = `${SERVICE_URL}&${PARAM.PROJECTION}=${epsgNumber}&${PARAM.NORTH}=${y}&${PARAM.EAST}=${x}`;
-        fetchUrl(url).then(responseToJSON).then(addZCoordinate(point)).then(resolve).catch(reject);
+        fetchUrl(url).then(responseToJSON).then(pickZ).then(zArray => add ? addZToPoints([point])(zArray) : zArray).then(([p]) => resolve(p)).catch(reject);
     });
 };
 
-const getZCoordinates = (pointArray, epsgNumber = DEFAULT_PROJECTION) => {
+const zCoordinates = (add = false) => (pointArray, epsgNumber = DEFAULT_PROJECTION) => {
     const arrays = [];
 
     for (let i = 0; i < pointArray.length; i += SERVICE_MULTI_LIMIT) {
@@ -57,12 +57,19 @@ const getZCoordinates = (pointArray, epsgNumber = DEFAULT_PROJECTION) => {
     return new Promise((resolve, reject) => {
         Promise.all(arrays.map(a => {
             const url = `${SERVICE_URL}&${PARAM.PROJECTION}=${epsgNumber}&${PARAM.MULTI}=${JSON.stringify(a)}`;
-            return fetchUrl(url).then(responseToJSON).then(addZCoordinates(a)).catch(reject);
+            return fetchUrl(url).then(responseToJSON).then(pickZ).then(zArray => add ? addZToPoints(a)(zArray) : zArray).catch(reject);
         })).then(mergeArrays).then(resolve);
     });
 };
 
+const getZCoordinates = zCoordinates();
+const getZCoordinate = zCoordinate();
+const addZCoordinates = zCoordinates(true);
+const addZCoordinate = zCoordinate(true);
+
 export {
+    getZCoordinate,
     getZCoordinates,
-    getZCoordinate
+    addZCoordinate,
+    addZCoordinates
 };
