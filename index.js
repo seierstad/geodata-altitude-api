@@ -1,5 +1,7 @@
 const SERVICE = "https://ws.geonorge.no/hoydedata/v1/punkt";
 const SERVICE_MULTI_LIMIT = 50;
+const THROTTLE_DELAY_TIME = 50;
+
 const PARAM = {
     PROJECTION: "koordsys",
     NORTH: "nord",
@@ -25,12 +27,21 @@ const fetchUrl = (url) => {
     });
 };
 
+
 const responseToJSON = response => {
     if (!response.ok) {
-        throw new Error(response.error);
+        console.error(`error: ${response.status} ${response.statusText}`);
+        throw new Error(response.statusText);
     }
 
     return response.json();
+};
+
+const throttled = fn => (delay, ...rest) => {
+    return new Promise((resolve) => {
+        const runFn = (...params) => fn(...params).then(resolve);
+        setTimeout(runFn, delay, ...rest)
+    });
 };
 
 const addZToPoints = (pointArray) => (zArray) => pointArray.map(([x, y], index) => [x, y, zArray[index]]);
@@ -47,17 +58,19 @@ const zCoordinate = (add = false) => (point, epsgNumber = DEFAULT_PROJECTION) =>
     });
 };
 
-const zCoordinates = (add = false) => (pointArray, epsgNumber = DEFAULT_PROJECTION) => {
+const zCoordinates = (add = false) => (pointArray, epsgNumber = DEFAULT_PROJECTION, throttleDelay = THROTTLE_DELAY_TIME) => {
     const arrays = [];
 
     for (let i = 0; i < pointArray.length; i += SERVICE_MULTI_LIMIT) {
         arrays.push(pointArray.slice(i, i + SERVICE_MULTI_LIMIT));
     }
 
+    const throttledFetch = throttled(fetchUrl);
+
     return new Promise((resolve, reject) => {
-        Promise.all(arrays.map(a => {
+        Promise.all(arrays.map((a, i) => {
             const url = `${SERVICE_URL}&${PARAM.PROJECTION}=${epsgNumber}&${PARAM.MULTI}=${JSON.stringify(a)}`;
-            return fetchUrl(url).then(responseToJSON).then(pickZ).then(zArray => add ? addZToPoints(a)(zArray) : zArray).catch(reject);
+            return throttledFetch(throttleDelay * i, url).then(responseToJSON).then(pickZ).then(zArray => add ? addZToPoints(a)(zArray) : zArray).catch(reject);
         })).then(mergeArrays).then(resolve);
     });
 };
