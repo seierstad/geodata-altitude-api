@@ -40,7 +40,7 @@ const responseToJSON = response => {
 const throttled = fn => (delay, ...rest) => {
     return new Promise((resolve) => {
         const runFn = (...params) => fn(...params).then(resolve);
-        setTimeout(runFn, delay, ...rest)
+        setTimeout(runFn, delay, ...rest);
     });
 };
 
